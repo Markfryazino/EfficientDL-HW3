@@ -16,8 +16,8 @@ from scaler import CustomGradScaler
 
 def zeros_num_in_grad(optimizer):
     num_zeros = 0
-    for group in optimizer.param_groups.values():
-        for param in group:
+    for group in optimizer.param_groups:
+        for param in group["params"]:
             num_zeros += (param.grad == 0).sum()
     return num_zeros
 
@@ -25,12 +25,13 @@ def zeros_num_in_grad(optimizer):
 def train_epoch(
     train_loader: torch.utils.data.DataLoader,
     model: torch.nn.Module,
-    criterion: torch.nn._Loss,
-    optimizer: torch.optim.optimizer.Optimizer,
+    criterion,
+    optimizer: torch.optim.Adam,
     scaler: Union[torch.cuda.amp.GradScaler, CustomGradScaler],
     fp16: bool,
     device: torch.device,
-    log_steps: int
+    log_steps: int,
+    n_epoch: int
 ) -> None:
     model.train()
 
@@ -56,13 +57,15 @@ def train_epoch(
         logging_accuracy += accuracy / log_steps
 
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
-        wandb.log({
-            "section1/loss": logging_loss,
-            "section1/accuracy": logging_accuracy,
-            "section1/zero number in gradients": logging_zeros
-        })
 
-        if i % log_steps == 0:
+        if (i + 1) % log_steps == 0:
+            wandb.log({
+                "section1/loss": logging_loss,
+                "section1/accuracy": logging_accuracy,
+                "section1/zero number in gradients": logging_zeros,
+                "section1/epoch": n_epoch
+            }, step = len(train_loader) * n_epoch + i + 1)
+
             logging_loss = logging_zeros = logging_accuracy = 0
 
 
@@ -80,13 +83,14 @@ def train(cfg):
     scaler = instantiate(cfg.scaling)
 
     # проверка, что не будет обучения в fp32 со скейлингом
-    assert cfg.fp16 or not scaler.enabled
+    assert cfg.fp16 or not scaler.is_enabled()
 
     train_loader = get_train_data()
 
     num_epochs = 5
     for epoch in range(0, num_epochs):
-        train_epoch(train_loader, model, criterion, optimizer, scaler, cfg.fp16, device=device, log_steps=cfg.wandb.log_steps)
+        train_epoch(train_loader, model, criterion, optimizer, scaler, cfg.fp16, device=device, 
+                    log_steps=cfg.wandb.log_steps, n_epoch=epoch)
 
     wandb.finish()
 

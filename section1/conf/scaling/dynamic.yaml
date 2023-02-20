@@ -1,2 +1,4 @@
 _target_: scaler.CustomGradScaler
 fixed: False
+init_scale: 10000000
+growth_interval: 20
