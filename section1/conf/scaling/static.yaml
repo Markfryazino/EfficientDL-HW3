@@ -1,0 +1,3 @@
+_target_: scaler.CustomGradScaler
+fixed: True
+init_scale: 65536

@@ -1,0 +1,8 @@
+wandb:
+    entity: broccoliman
+    project: efficient_dl_week3
+    name: null
+    log_steps: 20
+device: cuda:0
+fp16: ???
+scaling: ???
