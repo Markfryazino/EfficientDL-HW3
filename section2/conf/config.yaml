@@ -9,4 +9,4 @@ defaults:
 
 data_path: ./processed_wikitext
 device: "cuda:0"
-batch_size: 32
+batch_size: 64

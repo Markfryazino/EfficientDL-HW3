@@ -1,0 +1,7 @@
+python run_epoch.py dataset=brain wandb.name="section2-brain" device="cuda:2"
+python run_epoch.py dataset=bigbrain wandb.name="section2-bigbrain" device="cuda:2"
+python run_epoch.py dataset=ultrabrain dataset.num_bins=1 wandb.name="section2-ultrabrain-1" device="cuda:2"
+python run_epoch.py dataset=ultrabrain dataset.num_bins=5 wandb.name="section2-ultrabrain-5" device="cuda:2"
+python run_epoch.py dataset=ultrabrain dataset.num_bins=10 wandb.name="section2-ultrabrain-10" device="cuda:2"
+python run_epoch.py dataset=ultrabrain dataset.num_bins=25 wandb.name="section2-ultrabrain-25" device="cuda:2"
+python run_epoch.py dataset=ultrabrain dataset.num_bins=50 wandb.name="section2-ultrabrain-50" device="cuda:2"

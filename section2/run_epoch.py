@@ -17,31 +17,32 @@ def run_epoch(cfg) -> None:
     config = omegaconf.OmegaConf.to_container(
         cfg, resolve=True, throw_on_missing=True
     )
+
     wandb.init(entity=cfg.wandb.entity, project=cfg.wandb.project, name=cfg.wandb.name, config=config)
 
-    model = WeirdGPT2().to(cfg.device)
     device = torch.device(cfg.device)
+    model = WeirdGPT2().to(device)
 
     dataset = instantiate(cfg.dataset)
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
-        batch_size = None if isinstance(dataset, UltraDuperBigBrainDataset) else cfg.batch_size,
+        batch_size = 1 if isinstance(dataset, UltraDuperBigBrainDataset) else cfg.batch_size,
         batch_sampler=dataset.get_batch_sampler(),
         num_workers=4,
         collate_fn=dataset.get_collator(),
-        drop_last = None if isinstance(dataset, UltraDuperBigBrainDataset) else True,
+        drop_last = False if isinstance(dataset, UltraDuperBigBrainDataset) else True,
         shuffle = None if isinstance(dataset, UltraDuperBigBrainDataset) else True,
     )
 
     # для прогрева GPU один раз прогоняем через модель батч максимального размера
     x = torch.randint(1, VOCAB_LENGTH - 1, (cfg.batch_size, MAX_LENGTH))
-    model(x.to(cfg.device))
+    model(x.to(device))
 
     times = []
 
     for x, _ in tqdm(dataloader, total=len(dataloader)):
         start_time = perf_counter()
-        model(x.to(cfg.device))
+        model(x.to(device))
         torch.cuda.synchronize(device)
         times.append(perf_counter() - start_time)
 
