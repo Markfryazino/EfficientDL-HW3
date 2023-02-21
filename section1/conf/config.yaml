@@ -5,4 +5,6 @@ wandb:
     log_steps: 5
 device: cuda:0
 fp16: ???
-scaling: ???
+defaults:
+    - scaling: ???
+    - _self_

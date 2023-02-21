@@ -5,14 +5,15 @@ import torch
 import math
 import random
 from torch.utils.data.dataset import Dataset
-from datasets import load_dataset
+from datasets import load_from_disk
 
 
 MAX_LENGTH = 640
 
 
+# я изменил сигнатуру, потому что строки нам тут нафиг не нужны
 def collate_fn(
-    batch: List[Tuple[str, torch.Tensor]], max_length: Optional[int] = MAX_LENGTH
+    batch: List[torch.Tensor], max_length: Optional[int] = MAX_LENGTH
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Pad each sequence of the incoming sequences list
@@ -21,11 +22,10 @@ def collate_fn(
     :return: tuple of padded sequences and corresponding training targets
     """
     
-    tokens = [obj[1] for obj in batch]
-    max_length = max_length or max([len(obj) for obj in tokens])
+    max_length = max_length or max([len(obj) for obj in batch])
     padded = torch.vstack([
         torch.nn.functional.pad(obj, (0, max_length + 1 - len(obj)), value=0)
-        for obj in tokens
+        for obj in batch
     ])
     # тут мы в качестве <eos> используем <pad>
     return padded[:, :-1], padded[:, 1:]
@@ -34,17 +34,14 @@ def collate_fn(
 
 class WikiTextDataset(Dataset):
     def __init__(self, data_path, max_length):
-        self.data = load_dataset(data_path)
+        self.indices = load_from_disk(data_path)["indices"][:]
         self.max_length = max_length
         
     def __getitem__(self, index) -> torch.Tensor:
-        return (
-            self.data["text"][index],
-            self.data["indices"][index][:self.max_length]
-        )
+        return self.indices[index]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.indices)
 
     def get_collator(self):
         return partial(collate_fn, max_length=None)
@@ -71,10 +68,10 @@ class BigBrainDataset(WikiTextDataset):
 # когда бины заканчиваются, индексы достаются уже втупую из rogues
 class LengthSampler(torch.utils.data.Sampler):
     def __init__(self, dataset: WikiTextDataset, num_bins: int, batch_size: int):
-        sorted_lens = list(sorted([(len(obj[1]), idx) for idx, obj in enumerate(dataset)]))
+        sorted_lens = list(sorted([(len(obj), idx) for idx, obj in enumerate(dataset)]))
         bin_size = int(math.ceil(len(dataset) / num_bins))
         self.batch_size = batch_size
-        self.num_batches = len(dataset) / batch_size
+        self.num_batches = len(dataset) // batch_size
         self.bins = [
             [obj[1] for obj in sorted_lens[i * bin_size: (i + 1) * bin_size]]
             for i in range(num_bins)
@@ -119,4 +116,4 @@ class UltraDuperBigBrainDataset(WikiTextDataset):
         self.batch_size = batch_size
 
     def get_batch_sampler(self):
-        return LengthSampler(self.data, self.num_bins, self.batch_size)
+        return LengthSampler(self, self.num_bins, self.batch_size)

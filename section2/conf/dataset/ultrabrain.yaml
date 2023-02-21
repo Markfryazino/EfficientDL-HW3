@@ -1,5 +1,5 @@
 _target_: dataset.UltraDuperBigBrainDataset
 max_length: 640
 data_path: ${data_path}
-num_bins: ???
 batch_size: ${batch_size}
+num_bins: ???
