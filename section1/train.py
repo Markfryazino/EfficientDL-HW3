@@ -57,6 +57,8 @@ def train_epoch(
         logging_accuracy += accuracy / log_steps
 
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
+        # увеличиваем wandb.step
+        wandb.log({})
 
         if (i + 1) % log_steps == 0:
             wandb.log({
@@ -64,7 +66,7 @@ def train_epoch(
                 "section1/accuracy": logging_accuracy,
                 "section1/zero number in gradients": logging_zeros,
                 "section1/epoch": n_epoch
-            }, step = len(train_loader) * n_epoch + i + 1)
+            }, step=wandb.run.step)
 
             logging_loss = logging_zeros = logging_accuracy = 0
 

@@ -1,0 +1,9 @@
+wandb:
+    entity: broccoliman
+    project: efficient_dl_week3
+    name: null
+
+dataset: ???
+data_path: ./processed_wikitext
+device: "cuda:0"
+batch_size: 32

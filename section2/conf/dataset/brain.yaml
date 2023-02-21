@@ -1,0 +1,3 @@
+_target_: dataset.BrainDataset
+max_length: 640
+data_path: ${data_path}
