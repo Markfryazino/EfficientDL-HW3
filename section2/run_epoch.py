@@ -18,7 +18,7 @@ def run_epoch(cfg) -> None:
         cfg, resolve=True, throw_on_missing=True
     )
 
-    wandb.init(entity=cfg.wandb.entity, project=cfg.wandb.project, name=cfg.wandb.name, config=config)
+    wandb.init(entity=cfg.wandb.entity, project=cfg.wandb.project, name=cfg.wandb.name, config=config, tags=["sec2-final"])
 
     device = torch.device(cfg.device)
     model = WeirdGPT2().to(device)
@@ -37,6 +37,7 @@ def run_epoch(cfg) -> None:
     # для прогрева GPU один раз прогоняем через модель батч максимального размера
     x = torch.randint(1, VOCAB_LENGTH - 1, (cfg.batch_size, MAX_LENGTH))
     model(x.to(device))
+    torch.cuda.synchronize(device)
 
     times = []
 

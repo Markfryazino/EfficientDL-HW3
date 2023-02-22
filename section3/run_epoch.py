@@ -37,19 +37,30 @@ def get_train_loader() -> torch.utils.data.DataLoader:
 
 def run_epoch(model, train_loader, criterion, optimizer) -> tp.Tuple[float, float]:
     epoch_loss, epoch_accuracy = 0, 0
-    for i, (data, label) in tqdm(enumerate(train_loader), desc=f"[Train]"):
-        data = data.to(Settings.device)
-        label = label.to(Settings.device)
-        output = model(data)
-        loss = criterion(output, label)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    with torch.profiler.profile(
+            schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=2),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/bad_vit'),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True
+    ) as prof:
+        for i, (data, label) in tqdm(enumerate(train_loader), desc=f"[Train]"):
+            data = data.to(Settings.device)
+            label = label.to(Settings.device)
+            output = model(data)
+            loss = criterion(output, label)
 
-        acc = (output.argmax(dim=1) == label).float().mean()
-        epoch_accuracy += acc / len(train_loader)
-        epoch_loss += loss / len(train_loader)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            acc = (output.argmax(dim=1) == label).float().mean()
+            epoch_accuracy += acc / len(train_loader)
+            epoch_loss += loss / len(train_loader)
+
+            prof.step()
+
     return epoch_loss, epoch_accuracy
 
 
