@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 import dataset
 from utils import Settings
@@ -40,7 +40,7 @@ def run_epoch(model, train_loader, criterion, optimizer) -> tp.Tuple[float, floa
 
     with torch.profiler.profile(
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=2),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/bad_vit'),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler('./log2/bad_vit'),
             record_shapes=True,
             profile_memory=True,
             with_stack=True
@@ -60,6 +60,8 @@ def run_epoch(model, train_loader, criterion, optimizer) -> tp.Tuple[float, floa
             epoch_loss += loss / len(train_loader)
 
             prof.step()
+            if i == 20:
+                break
 
     return epoch_loss, epoch_accuracy
 
